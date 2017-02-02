@@ -27,3 +27,8 @@
 *.exe
 *.out
 *.app
+
+#ROS stuff
+ros_ws/devel
+ros_ws/build
+.catkin_workspace
