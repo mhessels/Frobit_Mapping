@@ -28,6 +28,10 @@
 *.out
 *.app
 
+# Project related
+*.pyc
+*.png
+
 #ROS stuff
 ros_ws/devel
 ros_ws/build
