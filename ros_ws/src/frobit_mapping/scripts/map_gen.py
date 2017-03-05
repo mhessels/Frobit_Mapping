@@ -1,4 +1,5 @@
-﻿"""
+﻿#!/usr/bin/env python
+"""
     Author: Matthias Hessels <matthiashessels@hotmail.com>
     Year: 2017
     This file is part of the master project of Matthias Hessels.
@@ -11,17 +12,12 @@
 #
 import random
 import numpy
-#from std_msgs import *
-#from nav_msgs import *
-#from geometry_msgs import *
-#from frobit_mapping.srv import *
+import math
 from PIL import Image
-from math import ceil
 
 class FrobomindMap:
     def __init__(self,FieldSizeX = 100,FieldSizeY = 100, LocalMapSize = 15,\
                  gridSize = 0.05, fileExtension = '.png',visualize = False):
-
         #The following numbers are in meters    
         self.FieldSizeX = FieldSizeX  
         self.FieldSizeY = FieldSizeY
@@ -34,8 +30,8 @@ class FrobomindMap:
         
         self.fileExtension = fileExtension
         
-        self.x_size = ceil(self.FieldSizeX / float(self.LocalMapSize))
-        self.y_size = ceil(self.FieldSizeY / float(self.LocalMapSize))
+        self.x_size = math.ceil(self.FieldSizeX / float(self.LocalMapSize))
+        self.y_size = math.ceil(self.FieldSizeY / float(self.LocalMapSize))
 
         
         self.localMapPixelCount = (int)(self.LocalMapSize/self.gridSize)
@@ -48,12 +44,9 @@ class FrobomindMap:
         
         self.local_map = numpy.zeros((3*self.localMapPixelCount,3*self.localMapPixelCount))
         
-        
-        #rospy.init_node('map_database_server')
-        #getMapService = rospy.Service('getMapService', GetMapService, self.getMapSegment)
-        
-        #getPixelFromPositionService = rospy.Service('getPixelFromPositionService', GetPixelFromPosition, self.getPixelPos)
+        self.genMap() # Generate the maps on startup. 
 
+        
     def genMap(self): 
         
         #Allocate memory for the map. Since all local maps have the same size,
@@ -62,15 +55,13 @@ class FrobomindMap:
         h = self.localMapPixelCount
         Matrix = numpy.zeros((w,h))
         map_number = 0
+        im = Image.fromarray(Matrix)
+        im = im.convert('RGB')
         for local_map_number_x in range(0,int(self.x_size)):
             for local_map_number_y in range(0,int(self.y_size)):
                 filename = "../maps/maps/local_map_" + str(local_map_number_x) + "_" \
                     + str(local_map_number_y) + self.fileExtension
-                for i in range(0,w):
-                    for j in range(0,h):
-                        Matrix[i][j] = random.randint(0,255)
-                im = Image.fromarray(Matrix)
-                im = im.convert('RGB')
+
                 im.save(filename)
                 map_number = map_number + 1
                 print("Generated " + str(map_number) + " of " + str((int)(self.x_size * self.y_size)))
@@ -97,8 +88,7 @@ class FrobomindMap:
     
     #Debugging function for visualization purposes
     def getLocalMapIdent(self,x_position,y_position,array):
-        #filename_to_open = "../maps/maps_ident/local_map_" + str(x_position) + "_" + str(y_position) + self.fileExtension
-        filename_to_open = "maps_ident/local_map_" + str(x_position) + "_" + str(y_position) + self.fileExtension
+        filename_to_open = "../maps/maps_ident/local_map_" + str(x_position) + "_" + str(y_position) + self.fileExtension
         try:
             im = Image.open(filename_to_open).convert('L')
         except IOError:
@@ -208,14 +198,14 @@ class FrobomindMap:
     # Define a service that calls this funtion, that takes the current position as input and responds with the pixel and map number
     def getPixelFromPosition(self,x,y): 
         return_list =  []
-        g_x = floor(x / self.gridSize)
-        g_y = floor(y / self.gridSize)
+        g_x = math.floor(x / self.gridSize)
+        g_y = math.floor(y / self.gridSize)
         
         # Position 0,1 correspond to map_number [x,y], position 2,3 are the pixel offset in those maps
-        return_list[0] = floor(g_x / self.localMapPixelCount)
-        return_list[1] = floor(g_y / self.localMapPixelCount)
-        return_list[2] = g_x % self.localMapPixelCount
-        return_list[3] = g_y % self.localMapPixelCount
+        return_list.append(math.floor(g_x / self.localMapPixelCount))
+        return_list.append(math.floor(g_y / self.localMapPixelCount))
+        return_list.append(g_x % self.localMapPixelCount)
+        return_list.append(g_y % self.localMapPixelCount)
         
         return return_list
 

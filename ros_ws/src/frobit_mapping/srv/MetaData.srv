@@ -1,0 +1,4 @@
+int32 dummy
+---
+int64 len
+float32 resolution

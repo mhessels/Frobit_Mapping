@@ -1,0 +1,4 @@
+int16 x
+int16 y
+---
+nav_msgs/OccupancyGrid map
