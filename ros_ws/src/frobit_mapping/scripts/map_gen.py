@@ -73,7 +73,7 @@ class FrobomindMap:
             im = Image.open(filename_to_open).convert('L')
         except IOError:
             print("Map you are trying to get does not exist")
-            return -1
+            return 0
         pix = im.load()
         if not (im.size[0] == im.size[1] == (int)(self.LocalMapSize/self.gridSize)):
             print("Size of the map/image you are trying to load is wrong")
@@ -83,7 +83,10 @@ class FrobomindMap:
             return -1
         for i in range(0,im.size[0]):
             for j in range(0,im.size[1]):
-                array[i][j] = pix[j,i] # Switch i and j, otherwise the picture will be flipped 90 degrees
+                if(pix[i,j] > 127):
+                    array[i][j] = 127
+                else:
+                    array[i][j] = pix[i,j]
         return 0
     
     #Debugging function for visualization purposes
@@ -93,17 +96,21 @@ class FrobomindMap:
             im = Image.open(filename_to_open).convert('L')
         except IOError:
             print("Map you are trying to get does not exist")
-            return -1
-        pix = im.load()
+            return 0 # But still make it a successful call
+        
         if not (im.size[0] == im.size[1] == (int)(self.LocalMapSize/self.gridSize)):
             print("Size of the map/image you are trying to load is wrong")
             return -1
         if not (len(array) == len(array[0]) == (int)(self.LocalMapSize/self.gridSize)):
             print("Size of array that you are trying to put picture into is wrong size")
             return -1
+        pix = im.load()
         for i in range(0,im.size[0]):
             for j in range(0,im.size[1]):
-                array[i][j] = pix[j,i] # Switch i and j, otherwise the picture will be flipped 90 degrees
+                if(pix[i,j] > 127):
+                    array[i][j] = 127
+                else:
+                    array[i][j] = pix[i,j]
         return 0
         
         
@@ -209,15 +216,4 @@ class FrobomindMap:
         
         return return_list
 
-    def getMapSegment(self,request):
-        # See notes.     
-        return GetMapServiceResponse()
-    
-    def getPixelPos(self,request):
-        res = self.getPixelFromPosition(request.position.translation.x,request.position.translation.y)
-        ret = Float32MultiArray()
-        ret.resize(4)
-        for i in range(0,3):
-            ret[i] = res[i]
-            
-        return GetPixelFromPositionResponse(ret)
+

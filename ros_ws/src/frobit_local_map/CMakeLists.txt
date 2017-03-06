@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
    grid_map_msgs
    grid_map_ros
    geometry_msgs
+   nav_msgs
    frobit_mapping
   roscpp
 )
@@ -109,7 +110,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS 
 #  LIBRARIES frobit_local_map
-  CATKIN_DEPENDS grid_map_core grid_map_msgs grid_map_ros roscpp frobit_mapping geometry_msgs
+  CATKIN_DEPENDS grid_map_core grid_map_msgs grid_map_ros roscpp frobit_mapping geometry_msgs nav_msgs
 #  DEPENDS system_lib
 )
 
@@ -121,6 +122,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+    include
   ${catkin_INCLUDE_DIRS} 
 )
 
@@ -137,7 +139,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/frobit_local_map_node.cpp)
+add_executable(${PROJECT_NAME}_node src/frobit_local_map_node.cpp local_map.cpp)
 add_executable(grid_map_test src/grid_map_test.cpp)
 
 ## Rename C++ executable without prefix
@@ -153,6 +155,7 @@ add_executable(grid_map_test src/grid_map_test.cpp)
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(${PROJECT_NAME}_node
+    include
    ${catkin_LIBRARIES}
    
  )

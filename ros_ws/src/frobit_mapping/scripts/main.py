@@ -4,7 +4,7 @@ import rospy
 import numpy
 
 from std_msgs import *
-from nav_msgs import *
+from nav_msgs.msg import *
 from geometry_msgs import *
 from frobit_mapping.srv import *
 from std_msgs.msg import *
@@ -12,7 +12,7 @@ from std_msgs.msg import *
 
 class Node:
     def __init__(self):
-        self.Map = FrobomindMap()    
+        self.Map = FrobomindMap(LocalMapSize=15)    
         rospy.init_node('map_database_server')
         metaDataService = rospy.Service('metaDataService',MetaData,self.handle_meta_data_req)
         pixelPosService = rospy.Service('pixelFromPosService',GetPixelFromPosition,self.handle_pixelpos_req)
@@ -26,13 +26,21 @@ class Node:
         return GetPixelFromPositionResponse(res)
     
     def handle_getmap_req(self,req):
-        ret_map = numpy.zeros((self.Map.localMapPixelCount,self.Map.localMapPixelCount))
-        getLocalMapIdent(req.x,req.y,ret_map)
+        ret_map = numpy.zeros((self.Map.localMapPixelCount,self.Map.localMapPixelCount),dtype=numpy.int8)
+        result = self.Map.getLocalMapIdent(req.x,req.y,ret_map)
+        print("Got request for map: %d , %d",req.x,req.y)
         m = OccupancyGrid()
-        m.info.resolution = self.Map.gridSize
-        m.info.width = self.Map.localMapPixelCount
-        m.info.height = self.Map.localMapPixelCount
-        m.data = list(ret_map.reshape((self.localMapPixelCount**2,)))
+        succes = False
+        if result == 0:
+            m.info.resolution = self.Map.gridSize
+            m.info.width = self.Map.localMapPixelCount
+            m.info.height = self.Map.localMapPixelCount
+            m.data = list(ret_map.reshape((self.Map.localMapPixelCount**2,)))
+            succes = True
+            
+        else:
+            sucess = False
+        return {'map':m,'succes':succes}
     
     def run(self):
         rospy.spin()
