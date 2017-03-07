@@ -1,4 +1,4 @@
-#include"local_map.h"
+#include"frobit_local_map/local_map.h"
 
 local_map::local_map(ros::NodeHandle n){
     nh = n;
@@ -6,6 +6,7 @@ local_map::local_map(ros::NodeHandle n){
     meta_client = nh.serviceClient<frobit_mapping::MetaData>("metaDataService");
     pixPos_client = nh.serviceClient<frobit_mapping::GetPixelFromPosition>("pixelFromPosService");
     getMap_client = nh.serviceClient<frobit_mapping::GetMapService>("getMapService");
+    setMap_client = nh.serviceClient<frobit_mapping::SetMapService>("setMapService");
     local_map_publisher = nh.advertise<nav_msgs::OccupancyGrid>("map",1);
     
     //Get the map meta data from the database
@@ -13,28 +14,30 @@ local_map::local_map(ros::NodeHandle n){
     meta_data.request.dummy = 1;
     if (meta_client.call(meta_data)){
         size = meta_data.response.len;
-        res = meta_data.response.resolution;
+        resolution = meta_data.response.resolution;
     }else{
         ROS_ERROR("Could not call metaDataService");
-        initalized = false;
+        initialized = false;
         return;
     }
     
+    rawMap.add(layer_name);
+    
     grid_map::Length l(size*3,size*3);
-    rawMap.setGeometry(l,res);
+    rawMap.setGeometry(l,resolution);
     
     //Move to initial position 
     start_x = 0;//GET ROS PARAM
     start_y = 0;//GET ROS PARAM
     
-    current_position[0] = start_x;
-    current_position[1] = start_y;
+    current_pos[0] = start_x;
+    current_pos[1] = start_y;
     
     // Set the center of the local map to the current center
     rawMap.move(getMapPosition(start_x,start_y));
     
     init();
-    initalized = true;
+    initialized = true;
 }
 
 void local_map::init(){
@@ -55,12 +58,13 @@ void local_map::init(){
     map_numbers.push_back(std::make_pair(0,0));
     
     data_fill(map_numbers);
-   }
+   
 }
 
 void local_map::data_fill(MapNrV map_numbers){
     
-    std::pair<int,int> center = map_numbers.pop_back();
+    std::pair<int,int> center = map_numbers.back();
+    map_numbers.pop_back();
     int centerx = center.first;
     int centery = center.second;
         
@@ -73,7 +77,7 @@ void local_map::data_fill(MapNrV map_numbers){
         s.request.x = centerx + ite.first;
         s.request.y = centery + ite.second;
         
-        if (c.call(s)){
+        if (getMap_client.call(s)){
             if(s.response.succes){
                 grid_map::GridMapRosConverter::fromOccupancyGrid(s.response.map,"tmp",temp_local_map);
 
@@ -88,18 +92,15 @@ void local_map::data_fill(MapNrV map_numbers){
         }
 
     //Datafill
-     for(double i = 0.001;i < size;i+= res){
-            for(double j = 0.001;j< size ; j += res){
-            Eigen::Vector3d h_pos(s.request.x*size+i-size/2,s.request.y*size+j-size/2,1); //homogeneous 2D point for transformation
-            Eigen::Vector3d new_pos = t_l_db*h_pos;
-
-            grid_map::Position global_pos(new_pos[0],new_pos[1]);
+     for(double i = 0.001;i < size;i+= resolution){
+            for(double j = 0.001;j< size ; j += resolution){
+            grid_map::Position global_pos(s.request.x*size+i-size/2,s.request.y*size+j-size/2);
             grid_map::Index i_global;
             grid_map::Position pos(i,j);
             grid_map::Index index;
             
             // Test global point validity
-            if (!map.getIndex(global_pos, i_global)){
+            if (!rawMap.getIndex(global_pos, i_global)){
                  std::cout << "Global position not found" << std::endl;
                 continue;
             }
@@ -109,7 +110,7 @@ void local_map::data_fill(MapNrV map_numbers){
             }
             
             auto& data_l = temp_local_map.at("tmp",index);
-            auto& data_g = map.at(layer_name,i_global);
+            auto& data_g = rawMap.at(layer_name,i_global);
             
             data_g = data_l;
             
@@ -126,5 +127,6 @@ void local_map::visualize(){
 }
 
 grid_map::Position local_map::getMapPosition(double x, double y){
-    return grid_map::Position pos(static_cast<int>(start_x/size)*size,static_cast<int>(start_y/size)*size);
+    grid_map::Position pos(static_cast<int>(start_x/size)*size,static_cast<int>(start_y/size)*size);
+    return pos;
 }

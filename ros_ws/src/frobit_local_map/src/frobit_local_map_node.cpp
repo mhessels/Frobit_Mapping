@@ -1,4 +1,4 @@
-#include"local_map.h"
+#include"frobit_local_map/local_map.h"
 
 #define layer_name "local_map_occupancy"
 
@@ -11,11 +11,12 @@ int main(int argc, char** argv){
     ros::NodeHandle nh;
     local_map l(nh);
     
+    l.visualize();
 }
 
 
-//Direction is the current yaw angle between 0 and 360, x,y is the current position in the field frame.
-MapNrV onMapBorder(double direction,double x, double y,ros::ServiceClient c){
+//Direction is the , x,y is the current position in the field frame.
+MapNrV getNextMapsOnBorder(int direction,double x, double y,ros::ServiceClient c){
     
     MapNrV new_maps;
     MapNrV old_maps;

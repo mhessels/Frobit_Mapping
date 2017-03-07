@@ -17,7 +17,7 @@ class Node:
         metaDataService = rospy.Service('metaDataService',MetaData,self.handle_meta_data_req)
         pixelPosService = rospy.Service('pixelFromPosService',GetPixelFromPosition,self.handle_pixelpos_req)
         getMapSerivice = rospy.Service('getMapService',GetMapService,self.handle_getmap_req)
-    
+        setMapSerivice = rospy.Service('setMapService',SetMapService,self.handle_setmap_req)
     def handle_meta_data_req(self,req):
         return MetaDataResponse(self.Map.LocalMapSize,self.Map.gridSize)
     
@@ -41,6 +41,13 @@ class Node:
         else:
             sucess = False
         return {'map':m,'succes':succes}
+    
+    def handle_setmap_req(self,req):
+        data = numpy.array()
+        data = req.map.data
+        data.reshape(req.map.height,req.map.width)
+        print(data)
+
     
     def run(self):
         rospy.spin()

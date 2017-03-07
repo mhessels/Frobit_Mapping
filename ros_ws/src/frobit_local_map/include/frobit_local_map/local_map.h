@@ -1,6 +1,7 @@
 #include"frobit_mapping/MetaData.h"
 #include"frobit_mapping/GetPixelFromPosition.h"
 #include"frobit_mapping/GetMapService.h"
+#include"frobit_mapping/setMapService.h"
 
 #include<geometry_msgs/Transform.h>
 #include<nav_msgs/OccupancyGrid.h>
@@ -18,6 +19,7 @@ private:
     ros::ServiceClient meta_client;
     ros::ServiceClient pixPos_client;
     ros::ServiceClient getMap_client;
+    ros::ServiceClient setMap_client;
     ros::Publisher local_map_publisher;
         
     const std::string layer_name = "detected_obstacles";
@@ -51,8 +53,8 @@ public:
     void setCurrentPosition(grid_map::Position p){current_pos = p;}
     
     double getCurrentRotation(){return current_rotation;}
-    void setCurrentRotation(double r)[current_rotation = r;}
+    void setCurrentRotation(double r){current_rotation = r;}
     
     //Check wether a new map should be loaded
     bool checkForMapChange();
-}
+};
