@@ -56,6 +56,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
    FILES
     GetMapService.srv
+    SetMapService.srv
     GetPixelFromPosition.srv
     MetaData.srv
  )

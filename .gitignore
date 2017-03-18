@@ -36,3 +36,6 @@
 ros_ws/devel
 ros_ws/build
 .catkin_workspace
+ros_ws/src/matthias
+ros_ws/src/frobomind
+ros_ws/src/grid_map

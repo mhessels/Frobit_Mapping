@@ -1,0 +1,5 @@
+nav_msgs/OccupancyGrid map
+int16 x
+int16 y
+---
+bool succes

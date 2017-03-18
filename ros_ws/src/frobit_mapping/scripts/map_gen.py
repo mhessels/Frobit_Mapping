@@ -73,7 +73,7 @@ class FrobomindMap:
             im = Image.open(filename_to_open).convert('L')
         except IOError:
             print("Map you are trying to get does not exist")
-            return 0
+            return 1
         pix = im.load()
         if not (im.size[0] == im.size[1] == (int)(self.LocalMapSize/self.gridSize)):
             print("Size of the map/image you are trying to load is wrong")
@@ -96,7 +96,7 @@ class FrobomindMap:
             im = Image.open(filename_to_open).convert('L')
         except IOError:
             print("Map you are trying to get does not exist")
-            return 0 # But still make it a successful call
+            return 1 # But still make it a successful call
         
         if not (im.size[0] == im.size[1] == (int)(self.LocalMapSize/self.gridSize)):
             print("Size of the map/image you are trying to load is wrong")
@@ -165,12 +165,12 @@ class FrobomindMap:
             return 0
     
     
-    def writeLocalMap(self,x_position,y_position,array,x_offset=0,y_offset=0):
+    def writeLocalMap(self,x_position,y_position,array):
         filename_to_open = "../maps/maps/local_map_" + str(x_position) + "_" + str(y_position) + self.fileExtension
         Matrix = numpy.zeros((self.localMapPixelCount,self.localMapPixelCount))
         for i in range(0,self.localMapPixelCount):
             for j in range(0,self.localMapPixelCount):
-                Matrix[i][j] = array[i+x_offset][j + y_offset]
+                Matrix[i][j] = array[j][i]
         try:
             im = Image.fromarray(Matrix)
             im = im.convert('RGB')

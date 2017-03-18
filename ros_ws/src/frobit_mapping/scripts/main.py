@@ -12,7 +12,8 @@ from std_msgs.msg import *
 
 class Node:
     def __init__(self):
-        self.Map = FrobomindMap(LocalMapSize=15)    
+        self.Map = FrobomindMap(LocalMapSize=15)
+        #self.Map = FrobomindMap(LocalMapSize=7)
         rospy.init_node('map_database_server')
         metaDataService = rospy.Service('metaDataService',MetaData,self.handle_meta_data_req)
         pixelPosService = rospy.Service('pixelFromPosService',GetPixelFromPosition,self.handle_pixelpos_req)
@@ -28,25 +29,29 @@ class Node:
     def handle_getmap_req(self,req):
         ret_map = numpy.zeros((self.Map.localMapPixelCount,self.Map.localMapPixelCount),dtype=numpy.int8)
         result = self.Map.getLocalMapIdent(req.x,req.y,ret_map)
+        #result = self.Map.getLocalMap(req.x,req.y,ret_map)
+        
         print("Got request for map: %d , %d",req.x,req.y)
         m = OccupancyGrid()
         succes = False
-        if result == 0:
+        if result >= 0:
             m.info.resolution = self.Map.gridSize
             m.info.width = self.Map.localMapPixelCount
             m.info.height = self.Map.localMapPixelCount
             m.data = list(ret_map.reshape((self.Map.localMapPixelCount**2,)))
             succes = True
-            
         else:
             sucess = False
         return {'map':m,'succes':succes}
     
     def handle_setmap_req(self,req):
-        data = numpy.array()
-        data = req.map.data
-        data.reshape(req.map.height,req.map.width)
-        print(data)
+        print("Saving map nr (%d , %d)",req.x,req.y)
+        
+        data = numpy.array(list(req.map.data))
+        data = data.reshape(req.map.info.height,req.map.info.width)
+        print(data.shape)
+        self.Map.writeLocalMap(req.x,req.y,data)
+        return True
 
     
     def run(self):
