@@ -1,70 +1,79 @@
 #include"frobit_local_map/local_map.h"
+#include"sensor_msgs/LaserScan.h"
+#include"nav_msgs/Odometry.h"
+#include<iostream>
+#include<math.h>
+#include<Eigen/Core>
 
-#define layer_name "local_map_occupancy"
+#define offset_low 119 // 30 degrees 
+#define nr_scans 480 //120 degrees
 
-typedef std::vector<std::pair<int,int> > MapNrV;
+bool updated = false;
 
-MapNrV onMapBorder(double direction,double x, double y,ros::ServiceClient c);
+Eigen::Vector3f scans[nr_scans];
+Eigen::Matrix3f t;
+
+void handle_odom(const nav_msgs::Odometry::ConstPtr& msg){
+    	double ysqr = msg->pose.pose.orientation.y * msg->pose.pose.orientation.y;
+    	// yaw (z-axis rotation)
+	double t3 = +2.0 * (msg->pose.pose.orientation.w * msg->pose.pose.orientation.z + msg->pose.pose.orientation.x * msg->pose.pose.orientation.y);
+	double t4 = +1.0 - 2.0 * (ysqr + msg->pose.pose.orientation.z * msg->pose.pose.orientation.z);  
+	double yaw = std::atan2(t3, t4);
+    t(0,0) = std::cos(yaw);
+    t(0,1) = -std::sin(yaw);
+    t(0,2) = msg->pose.pose.position.x;
+    t(1,0) = std::sin(yaw);
+    t(1,1) = std::cos(yaw);
+    t(1,2) = msg->pose.pose.position.y;
+    t(2,0) = 0;
+    t(2,1) = 0;
+    t(2,2) = 1;
+}
+
+void handle_scan(const sensor_msgs::LaserScan::ConstPtr& msg){
+    for(int i = 0;i<nr_scans;i++){
+        Eigen::Vector3f temp;
+        if(msg->ranges[i+offset_low] > msg->range_max){
+            temp(0) = -1;
+            temp(1) = -1;
+            temp(2) = 1;
+        }else{
+        double angle = (i+offset_low)*msg->angle_increment;
+        double r = msg->ranges[i+offset_low];
+        temp(0) = r*cos(angle);
+        temp(1) = r*sin(angle);
+        temp(2) = 1;
+        }
+        scans[i] = temp;
+    }
+    updated = true;
+    
+}
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "local_map_node");
     ros::NodeHandle nh;
+    ros::service::waitForService("metaDataService",5000);
     local_map l(nh);
     
-    l.visualize();
+    ros::Subscriber scan_sub = nh.subscribe("/frobit/scan",1,handle_scan);
+    ros::Subscriber odom_sub = nh.subscribe("/frobit/odom",1,handle_odom);
     
-    l.move(8,16,0);
-    l.move(8,32,0);
-//     l.move(8,8,0);
-//     l.move(8,15,0);
-    
+    while(ros::ok()){
+        if(updated){
+            updated = false;
+            for(int i = 0;i<nr_scans;i++){
+                if(scans[i](0) > 0){
+//                     stdD::cout << scans[i] << std::endl;
+                Eigen::Vector3f res = t*scans[i];
+                l.setMapData(res(0),res(1));
+                }
+            }
+            l.visualize();
+        }
+        ros::spinOnce();
+        
+    }
+    return 0;
 }
 
-
-//Direction is the current yaw angle between 0 and 360, x,y is the current position in the field frame.
-MapNrV onMapBorder(double direction,double x, double y,ros::ServiceClient c){
-    
-    MapNrV new_maps;
-    MapNrV old_maps;
-
-    //Get the current map number from database
-    frobit_mapping::GetPixelFromPosition pixPos;
-    geometry_msgs::Transform t;
-    t.translation.x = x;
-    t.translation.y = y;
-    pixPos.request.position = t;
-    if (c.call(pixPos)){
-        new_maps.push_back(std::make_pair(pixPos.response.result[0],pixPos.response.result[1]));
-    }else{
-        ROS_ERROR("Could not call position from pixel service");
-    }
-    
-    //Find maps to replace the old once
-    if(direction < 135 && direction >= 45){
-        new_maps.push_back(std::make_pair(-1,-1));
-        new_maps.push_back(std::make_pair(-1,0));
-        new_maps.push_back(std::make_pair(-1,1));
-    }else if(direction < 225 && direction >= 135){
-        new_maps.push_back(std::make_pair(-1,-1));
-        new_maps.push_back(std::make_pair(0,-1));
-        new_maps.push_back(std::make_pair(1,-1));
-    }else if(direction < 315 && direction >= 255){
-        new_maps.push_back(std::make_pair(1,-1));
-        new_maps.push_back(std::make_pair(1,0));
-        new_maps.push_back(std::make_pair(1,1));
-    }else if((direction < 45 && direction >= 0) ||(direction <= 360 && direction >= 315) ){
-        new_maps.push_back(std::make_pair(-1,1));
-        new_maps.push_back(std::make_pair(0,1));
-        new_maps.push_back(std::make_pair(1,1));
-    }else{
-        ROS_ERROR("Direction error. Current direction = %f",direction);
-    }
-    
-    for(auto ite : new_maps){
-        old_maps.push_back(std::make_pair(ite.first*-1,ite.second*-1));
-    }
-    
-    new_maps.insert(new_maps.end(),old_maps.begin(),old_maps.end());
-    
-    return new_maps;
-}

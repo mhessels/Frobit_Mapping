@@ -31,9 +31,7 @@ local_map::local_map(ros::NodeHandle n){
     start_x = 0;//GET ROS PARAM
     start_y = 0;//GET ROS PARAM
     
-    current_pos[0] = start_x;
-    current_pos[1] = start_y;
-    
+
     // Set the center of the local map to the current center
     rawMap.move(getMapPosition(start_x,start_y));
     
@@ -63,7 +61,6 @@ void local_map::init(){
 }
 
 void local_map::data_fill(MapNrV map_numbers){
-    
     std::pair<int,int> center = map_numbers.back();
     map_numbers.pop_back();
     int centerx = center.first;
@@ -73,7 +70,6 @@ void local_map::data_fill(MapNrV map_numbers){
 
     grid_map::GridMap temp_local_map;
     temp_local_map.add("tmp");
-//     temp_local_map.setBasicLayers("tmp");
     
     for(auto ite : map_numbers){ // Start from index 1, because 0 is center map
         s.request.x = centerx + ite.first;
@@ -81,11 +77,7 @@ void local_map::data_fill(MapNrV map_numbers){
         
         if (getMap_client.call(s)){
             if(s.response.succes){
-                if(s.response.map.info.resolution < 0){
-//                     temp_local_map.clearBasic();
-                }else{
-                    grid_map::GridMapRosConverter::fromOccupancyGrid(s.response.map,"tmp",temp_local_map);
-                }   
+                grid_map::GridMapRosConverter::fromOccupancyGrid(s.response.map,"tmp",temp_local_map);
             }else{
                 ROS_ERROR("Internal Datebase error when getting the map (%d , %d)", s.request.x,s.request.y);
                 return;
@@ -124,7 +116,7 @@ void local_map::data_fill(MapNrV map_numbers){
         }
         
         //NOTE Should not be here. Only for demo purpose
-        visualize();
+//         visualize();
     }
 }
 
@@ -221,4 +213,18 @@ void local_map::saveMaps(MapNrV maps){
             }
         }
     }
+}
+
+bool local_map::setMapData(double x, double y){
+    grid_map::Position pos(x,y);
+    grid_map::Index index;
+    if (!rawMap.getIndex(pos, index)){
+        std::cout << "Position in map does not exist" << std::endl;
+        return false;
+    }else{
+        auto& data = rawMap.at(layer_name,index);
+        data = 1;
+    }
+    std::cout << "alive" << std::endl;
+//     visualize();
 }

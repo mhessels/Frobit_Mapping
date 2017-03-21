@@ -30,8 +30,6 @@ private:
     double start_x;
     double start_y;
     
-    grid_map::Position current_pos;
-    double current_rotation;
     
     std::pair<MapNrV,MapNrV> onMapBorder(double direction,double x, double y);
     void update_raw_map(grid_map::GridMap& map, MapNrV map_numbers, double res,double size);
@@ -50,13 +48,7 @@ public:
     local_map(ros::NodeHandle n);
     bool isInitialized(){return initialized;}
     void visualize();
-    
-    grid_map::Position getCurrentPosition(){return current_pos;}
-    void setCurrentPosition(grid_map::Position p){current_pos = p;}
-    
-    double getCurrentRotation(){return current_rotation;}
-    void setCurrentRotation(double r){current_rotation = r;}
-    
+    bool setMapData(double x, double y);
     //Check wether a new map should be loaded
     bool checkForMapChange();
     void move(int dir,double x, double y);

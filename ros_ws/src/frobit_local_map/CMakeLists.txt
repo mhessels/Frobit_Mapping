@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
    grid_map_msgs
    grid_map_ros
    geometry_msgs
+   sensor_msgs
    nav_msgs
    frobit_mapping
   roscpp
@@ -110,7 +111,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS 
 #  LIBRARIES frobit_local_map
-  CATKIN_DEPENDS grid_map_core grid_map_msgs grid_map_ros roscpp frobit_mapping geometry_msgs nav_msgs
+  CATKIN_DEPENDS grid_map_core grid_map_msgs grid_map_ros roscpp frobit_mapping geometry_msgs nav_msgs sensor_msgs
 #  DEPENDS system_lib
 )
 

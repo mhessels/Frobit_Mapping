@@ -8,11 +8,13 @@ from nav_msgs.msg import *
 from geometry_msgs import *
 from frobit_mapping.srv import *
 from std_msgs.msg import *
+import os
 
 
 class Node:
     def __init__(self):
-        self.Map = FrobomindMap(LocalMapSize=15)
+
+        self.Map = FrobomindMap(LocalMapSize=15,gridSize=1)
         #self.Map = FrobomindMap(LocalMapSize=7)
         rospy.init_node('map_database_server')
         metaDataService = rospy.Service('metaDataService',MetaData,self.handle_meta_data_req)
@@ -28,10 +30,11 @@ class Node:
     
     def handle_getmap_req(self,req):
         ret_map = numpy.zeros((self.Map.localMapPixelCount,self.Map.localMapPixelCount),dtype=numpy.int8)
-        result = self.Map.getLocalMapIdent(req.x,req.y,ret_map)
-        #result = self.Map.getLocalMap(req.x,req.y,ret_map)
-        
+        #result = self.Map.getLocalMapIdent(req.x,req.y,ret_map)
         print("Got request for map: %d , %d",req.x,req.y)
+
+        result = self.Map.getLocalMap(req.x,req.y,ret_map)
+        
         m = OccupancyGrid()
         succes = False
         if result >= 0:
