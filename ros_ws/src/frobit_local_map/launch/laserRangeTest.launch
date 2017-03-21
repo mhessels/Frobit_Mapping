@@ -1,0 +1,14 @@
+<!-- -->
+<launch>
+
+<node pkg="frobit_mapping" name="map_db" type="main.py" output="screen">
+
+</node>
+
+<node pkg="frobit_local_map" name="local_map" type="frobit_local_map_node" output="screen">
+    <param name="grid_size" value="1"/>
+    <param name="local_map_size" value="15"/>
+</node>
+
+</launch>
+
